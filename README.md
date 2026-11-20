@@ -129,7 +129,7 @@ Prompts used:
 create a basic game from the respository.
 store the result in index.html.
 It will be a simple vertical plane shooter with the screen/player traveling upwards and enemies spawn at the top of the screen.
-create a simple level and store it in level_map.sql as a set of incert statements holding initial values for the level.
-
-add inserts to level_map.sql to add powerups to the game.
-they will take the form of increased fire rate or firing at angles
+create a simple level and store it in level_map.sql as a set of insert statements holding initial values for the level.
+include inserts to add powerups to the game.
+they will take the form of increased fire rate or firing at angles.
+create a mix of enemies including at least one boss level enemy.
