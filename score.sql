@@ -1,0 +1,1 @@
+UPDATE screen SET score = (SELECT COUNT(*) FROM entity WHERE spawned = 2)
