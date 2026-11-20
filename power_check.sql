@@ -1,3 +1,7 @@
+UPDATE powerup --update position
+SET x_position = x_position + move_x_speed,
+    y_position = y_position + move_y_speed;
+
 DELETE FROM powerup
 WHERE EXISTS (
     SELECT 1

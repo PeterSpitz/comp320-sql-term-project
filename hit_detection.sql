@@ -8,9 +8,14 @@ SET
     hit = TRUE; --mark bullets that hit
 
 INSERT INTO powerup (x_position, y_position, radius, move_speed_x, move_speed_y, power_type)
-SELECT 
-JOIN 
-WHERE 
+SELECT (e.x_position, e.y_position, 2, e.move_speed_x, (e.move_speed_y - 1), e.powerup) FROM entity e
+JOIN bullet b ON (
+                 (e.x_position - b.x_position) * (e.x_position - b.x_position)
+                 + (e.y_position - b.y_position) * (e.y_position - b.y_position)
+                 < (e.radius + b.radius) * (e.radius + b.radius)
+                 )
+WHERE e.powerup IS NOT NULL
+AND e.lives = 1;
 --spawn powerup if available at enemy position when enemy is hit with 1 hp
 
 UPDATE entity

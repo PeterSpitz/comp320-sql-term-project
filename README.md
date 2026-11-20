@@ -118,8 +118,8 @@ CREATE TABLE Enrollments (
 Checklist of included logic
 
   player: move, fire, recieve damage, collect powerups, stay in screen
-  enemy: 
-  bullets: 
-  powerups:
+  enemy: spawn, states, hit, fire
+  bullets: move, out of bounds, hit, spawn
+  powerups: spawn, move, out of bounds, collect
   screen: move towards end, update score
   level: use random generation
