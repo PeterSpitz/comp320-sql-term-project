@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Skyline Strike</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #07111f;
+      color: #eef7ff;
+    }
+
+    .game-shell {
+      position: relative;
+      width: min(92vw, 800px);
+      aspect-ratio: 4 / 3;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: 2px solid #70d7ff;
+      border-radius: 8px;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+      background: #10233a;
+    }
+
+    .hud {
+      position: absolute;
+      inset: 14px 18px auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+      font-weight: 800;
+      text-shadow: 0 2px 4px #000;
+      letter-spacing: 0.04em;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(4, 12, 24, 0.82);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .overlay.hidden { display: none; }
+
+    .panel { max-width: 500px; padding: 28px; }
+
+    h1 {
+      margin: 0 0 8px;
+      color: #70d7ff;
+      letter-spacing: 0.12em;
+    }
+
+    p { color: #bdd1df; line-height: 1.5; }
+
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 12px 22px;
+      background: #70d7ff;
+      color: #07111f;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    button:hover { background: #fff18a; }
+
+    .power-status {
+      position: absolute;
+      left: 18px;
+      bottom: 14px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      background: rgba(4, 12, 24, 0.75);
+      color: #fff18a;
+      font-weight: 800;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell">
+    <canvas id="game" width="800" height="600" aria-label="Vertical plane shooter"></canvas>
+    <div class="hud">
+      <span id="score">SCORE 000000</span>
+      <span id="lives">LIVES 10</span>
+      <span id="distance">DISTANCE 0%</span>
+    </div>
+    <div id="powerStatus" class="power-status">STANDARD WEAPON</div>
+    <section id="overlay" class="overlay">
+      <div class="panel">
+        <h1 id="title">SKYLINE STRIKE</h1>
+        <p id="message">Fly upward, dodge enemy fire, collect powerups, and defeat the final boss.</p>
+        <p><strong>Controls:</strong> WASD or arrow keys to move<br><strong>Firing:</strong> hold Space</p>
+        <button id="startButton">START MISSION</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const overlay = document.getElementById("overlay");
+    const title = document.getElementById("title");
+    const message = document.getElementById("message");
+    const startButton = document.getElementById("startButton");
+    const scoreElement = document.getElementById("score");
+    const livesElement = document.getElementById("lives");
+    const distanceElement = document.getElementById("distance");
+    const powerStatus = document.getElementById("powerStatus");
+
+    const keys = new Set();
+    const player = { x: 400, y: 520, r: 18, lives: 10, speed: 280, fireRate: 220, angleFire: false, lastShot: 0, invincibleUntil: 0 };
+    let bullets = [];
+    let enemies = [];
+    let powerups = [];
+    let particles = [];
+    let score = 0;
+    let running = false;
+    let lastTime = 0;
+    let scroll = 0;
+    let missionTime = 0;
+    let bossSpawned = false;
+    let spawnIndex = 0;
+
+    const level = [
+      { at: 400, x: 150, type: "scout" }, { at: 400, x: 650, type: "scout" },
+      { at: 700, x: 400, type: "heavy" },
+      { at: 1000, x: 220, type: "zigzag" }, { at: 1000, x: 580, type: "zigzag" },
+      { at: 1350, x: 400, type: "heavy" },
+      { at: 1650, x: 120, type: "zigzag" }, { at: 1650, x: 680, type: "zigzag" },
+      { at: 1900, x: 400, type: "scout" },
+      { at: 2100, x: 200, type: "heavy" }, { at: 2100, x: 600, type: "heavy" },
+      { at: 2400, x: 400, type: "boss" }
+    ];
+
+    const powerPositions = [
+      { y: 650, x: 400, type: "rapid" },
+      { y: 1500, x: 240, type: "angle" },
+      { y: 2050, x: 560, type: "rapid" }
+    ];
+
+    function resetGame() {
+      player.x = 400;
+      player.y = 520;
+      player.lives = 10;
+      player.fireRate = 220;
+      player.angleFire = false;
+      player.lastShot = 0;
+      player.invincibleUntil = 0;
+      bullets = [];
+      enemies = [];
+      powerups = powerPositions.map(p => ({ ...p, r: 14, collected: false }));
+      particles = [];
+      score = 0;
+      scroll = 0;
+      missionTime = 0;
+      bossSpawned = false;
+      spawnIndex = 0;
+      powerStatus.textContent = "STANDARD WEAPON";
+      updateHud();
+    }
+
+    function startGame() {
+      resetGame();
+      overlay.classList.add("hidden");
+      running = true;
+      lastTime = performance.now();
+      requestAnimationFrame(loop);
+    }
+
+    function endGame(won) {
+      running = false;
+      title.textContent = won ? "MISSION COMPLETE" : "AIRCRAFT LOST";
+      message.textContent = won
+        ? `Final score: ${score.toLocaleString()}. The skyline is secure.`
+        : `Final score: ${score.toLocaleString()}. Re-arm and try again.`;
+      startButton.textContent = "FLY AGAIN";
+      overlay.classList.remove("hidden");
+    }
+
+    function updateHud() {
+      scoreElement.textContent = `SCORE ${String(score).padStart(6, "0")}`;
+      livesElement.textContent = `LIVES ${player.lives}`;
+      const percent = Math.min(100, Math.floor((scroll / 3200) * 100));
+      distanceElement.textContent = `DISTANCE ${percent}%`;
+    }
+
+    function spawnEnemy(entry) {
+      if (entry.type === "boss") {
+        enemies.push({ x: entry.x, y: -70, r: 62, lives: 50, maxLives: 50, type: "boss", vx: 70, vy: 18, fireAt: 0, angle: 0 });
+        bossSpawned = true;
+      } else if (entry.type === "heavy") {
+        enemies.push({ x: entry.x, y: -35, r: 24, lives: 5, maxLives: 5, type: "heavy", vx: 25, vy: 30, fireAt: 0.7, angle: 0 });
+      } else {
+        enemies.push({ x: entry.x, y: -30, r: 16, lives: entry.type === "zigzag" ? 2 : 1, maxLives: entry.type === "zigzag" ? 2 : 1, type: entry.type, vx: entry.type === "zigzag" ? 75 : 35, vy: 55, fireAt: 1, angle: 0 });
+      }
+    }
+
+    function shootPlayer(now) {
+      if (!keys.has(" ") || now - player.lastShot < player.fireRate) return;
+      player.lastShot = now;
+      bullets.push({ x: player.x, y: player.y - 20, vx: 0, vy: -620, r: 4, friendly: true });
+      if (player.angleFire) {
+        bullets.push({ x: player.x, y: player.y - 18, vx: -180, vy: -590, r: 4, friendly: true });
+        bullets.push({ x: player.x, y: player.y - 18, vx: 180, vy: -590, r: 4, friendly: true });
+      }
+    }
+
+    function enemyFire(enemy, dt) {
+      enemy.fireAt -= dt;
+      if (enemy.fireAt > 0) return;
+      const dx = player.x - enemy.x;
+      const dy = player.y - enemy.y;
+      const length = Math.hypot(dx, dy) || 1;
+      const speed = enemy.type === "boss" ? 260 : 220;
+      bullets.push({ x: enemy.x, y: enemy.y + enemy.r * 0.5, vx: dx / length * speed, vy: dy / length * speed, r: enemy.type === "boss" ? 7 : 5, friendly: false });
+      if (enemy.type === "boss") {
+        for (const offset of [-0.25, 0.25]) {
+          const baseAngle = Math.atan2(dy, dx) + offset;
+          bullets.push({ x: enemy.x, y: enemy.y, vx: Math.cos(baseAngle) * 240, vy: Math.sin(baseAngle) * 240, r: 6, friendly: false });
+        }
+      }
+      enemy.fireAt = enemy.type === "boss" ? 0.65 : enemy.type === "heavy" ? 1.25 : 1.8;
+    }
+
+    function circleHit(a, b) {
+      return Math.hypot(a.x - b.x, a.y - b.y) < a.r + b.r;
+    }
+
+    function burst(x, y, color, count = 12) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 40 + Math.random() * 180;
+        particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 0.5 + Math.random() * 0.4, color });
+      }
+    }
+
+    function update(dt, now) {
+      missionTime += dt;
+      scroll += 32 * dt;
+      const mapDistance = scroll;
+
+      let dx = 0;
+      let dy = 0;
+      if (keys.has("arrowleft") || keys.has("a")) dx -= 1;
+      if (keys.has("arrowright") || keys.has("d")) dx += 1;
+      if (keys.has("arrowup") || keys.has("w")) dy -= 1;
+      if (keys.has("arrowdown") || keys.has("s")) dy += 1;
+      if (dx && dy) { dx *= Math.SQRT1_2; dy *= Math.SQRT1_2; }
+      player.x = Math.max(player.r, Math.min(canvas.width - player.r, player.x + dx * player.speed * dt));
+      player.y = Math.max(player.r, Math.min(canvas.height - player.r, player.y + dy * player.speed * dt));
+      shootPlayer(now);
+
+      while (spawnIndex < level.length && level[spawnIndex].at <= mapDistance) {
+        spawnEnemy(level[spawnIndex]);
+        spawnIndex++;
+      }
+
+      for (const bullet of bullets) {
+        bullet.x += bullet.vx * dt;
+        bullet.y += bullet.vy * dt;
+      }
+      bullets = bullets.filter(b => b.x > -20 && b.x < canvas.width + 20 && b.y > -30 && b.y < canvas.height + 30);
+
+      for (const enemy of enemies) {
+        enemy.angle += dt * 2;
+        if (enemy.type === "zigzag") enemy.x += enemy.vx * Math.cos(enemy.angle) * dt;
+        else if (enemy.type === "boss") {
+          enemy.x += enemy.vx * dt;
+          if (enemy.x < 130 || enemy.x > 670) enemy.vx *= -1;
+          enemy.y = Math.max(140, enemy.y + enemy.vy * dt);
+        } else enemy.x += enemy.vx * Math.sin(enemy.angle) * dt;
+        enemy.y += enemy.type === "boss" ? 0 : enemy.vy * dt;
+        enemyFire(enemy, dt);
+      }
+
+      for (const powerup of powerups) {
+        powerup.y -= 32 * dt;
+        if (!powerup.collected && circleHit(player, powerup)) {
+          powerup.collected = true;
+          score += 500;
+          burst(powerup.x, powerup.y, "#fff18a", 16);
+          if (powerup.type === "rapid") {
+            player.fireRate = 95;
+            powerStatus.textContent = "RAPID FIRE";
+          } else {
+            player.angleFire = true;
+            powerStatus.textContent = "ANGLE FIRE";
+          }
+        }
+      }
+
+      for (const bullet of bullets) {
+        if (!bullet.friendly) {
+          if (now > player.invincibleUntil && circleHit(player, bullet)) {
+            bullet.hit = true;
+            player.lives--;
+            player.invincibleUntil = now + 900;
+            burst(player.x, player.y, "#70d7ff", 10);
+            if (player.lives <= 0) endGame(false);
+          }
+        } else {
+          for (const enemy of enemies) {
+            if (!bullet.hit && enemy.lives > 0 && circleHit(bullet, enemy)) {
+              bullet.hit = true;
+              enemy.lives--;
+              burst(bullet.x, bullet.y, "#fff18a", 5);
+              if (enemy.lives <= 0) {
+                score += enemy.type === "boss" ? 10000 : enemy.type === "heavy" ? 750 : 300;
+                burst(enemy.x, enemy.y, enemy.type === "boss" ? "#ff6b91" : "#ff9d5c", enemy.type === "boss" ? 50 : 18);
+                if (enemy.type === "boss") endGame(true);
+              }
+            }
+          }
+        }
+      }
+
+      for (const enemy of enemies) {
+        if (circleHit(player, enemy) && now > player.invincibleUntil) {
+          player.lives--;
+          player.invincibleUntil = now + 1000;
+          burst(player.x, player.y, "#70d7ff", 14);
+          if (player.lives <= 0) endGame(false);
+        }
+      }
+
+      bullets = bullets.filter(b => !b.hit);
+      enemies = enemies.filter(e => e.lives > 0 && e.y < canvas.height + 100);
+      powerups = powerups.filter(p => !p.collected && p.y > -30);
+      particles = particles.filter(p => {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt;
+        return p.life > 0;
+      });
+
+      updateHud();
+    }
+
+    function drawPlane(x, y) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = "#70d7ff";
+      ctx.beginPath();
+      ctx.moveTo(0, -22);
+      ctx.lineTo(14, 14);
+      ctx.lineTo(5, 9);
+      ctx.lineTo(0, 18);
+      ctx.lineTo(-5, 9);
+      ctx.lineTo(-14, 14);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#eef7ff";
+      ctx.beginPath();
+      ctx.moveTo(0, -14);
+      ctx.lineTo(5, 7);
+      ctx.lineTo(-5, 7);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function draw() {
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, "#163b62");
+      gradient.addColorStop(1, "#091827");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = "rgba(120, 210, 255, 0.12)";
+      ctx.lineWidth = 1;
+      const offset = scroll % 80;
+      for (let y = offset - 80; y < canvas.height; y += 80) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+      for (let x = 40; x < canvas.width; x += 160) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+
+      for (const powerup of powerups) {
+        ctx.save();
+        ctx.translate(powerup.x, powerup.y);
+        ctx.rotate(missionTime * 2);
+        ctx.fillStyle = powerup.type === "rapid" ? "#fff18a" : "#ff82cc";
+        ctx.fillRect(-13, -13, 26, 26);
+        ctx.fillStyle = "#07111f";
+        ctx.font = "bold 16px Segoe UI";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(powerup.type === "rapid" ? "R" : "A", 0, 1);
+        ctx.restore();
+      }
+
+      for (const enemy of enemies) {
+        ctx.save();
+        ctx.translate(enemy.x, enemy.y);
+        ctx.fillStyle = enemy.type === "boss" ? "#ff4f7b" : enemy.type === "heavy" ? "#f09b62" : enemy.type === "zigzag" ? "#b58cff" : "#ff7968";
+        ctx.beginPath();
+        ctx.moveTo(0, enemy.r);
+        ctx.lineTo(enemy.r, -enemy.r * 0.7);
+        ctx.lineTo(enemy.r * 0.35, -enemy.r);
+        ctx.lineTo(-enemy.r * 0.35, -enemy.r);
+        ctx.lineTo(-enemy.r, -enemy.r * 0.7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        if (enemy.type === "boss") {
+          ctx.fillStyle = "#2a0a16";
+          ctx.fillRect(enemy.x - 70, enemy.y - enemy.r - 22, 140, 9);
+          ctx.fillStyle = "#ff4f7b";
+          ctx.fillRect(enemy.x - 70, enemy.y - enemy.r - 22, 140 * enemy.lives / enemy.maxLives, 9);
+        }
+      }
+
+      for (const bullet of bullets) {
+        ctx.fillStyle = bullet.friendly ? "#f7ff70" : "#ff82a8";
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, bullet.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (const particle of particles) {
+        ctx.globalAlpha = Math.min(1, particle.life * 2);
+        ctx.fillStyle = particle.color;
+        ctx.fillRect(particle.x - 2, particle.y - 2, 4, 4);
+        ctx.globalAlpha = 1;
+      }
+
+      if (performance.now() > player.invincibleUntil) drawPlane(player.x, player.y);
+      else if (Math.floor(performance.now() / 70) % 2 === 0) drawPlane(player.x, player.y);
+    }
+
+    function loop(now) {
+      if (!running) return;
+      const dt = Math.min((now - lastTime) / 1000, 0.033);
+      lastTime = now;
+      update(dt, now);
+      draw();
+      if (running) requestAnimationFrame(loop);
+    }
+
+    addEventListener("keydown", event => {
+      const key = event.key.toLowerCase();
+      if ([" ", "arrowleft", "arrowright", "arrowup", "arrowdown"].includes(key)) event.preventEvent?.();
+      if (["arrowleft", "arrowright", "arrowup", "arrowdown", " ", "w", "a", "s", "d"].includes(key)) {
+        event.preventDefault();
+        keys.add(key);
+      }
+    });
+    addEventListener("keyup", event => keys.delete(event.key.toLowerCase()));
+    startButton.addEventListener("click", startGame);
+
+    resetGame();
+    draw();
+  </script>
+</body>
+</html>
