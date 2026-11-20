@@ -3,6 +3,24 @@
 INSERT INTO weapon (id, fire_rate, radius, x_speed, y_speed)
 VALUES (1, 1, 4, 0, 620);
 
+-- Rapid-fire and angled-shot weapon upgrades.
+INSERT INTO weapon (id, fire_rate, radius, x_speed, y_speed)
+VALUES
+    (2, 0, 4, 0, 620),
+    (3, 1, 4, 180, 620);
+
+-- Power-up types link to the weapon a player receives when collected.
+INSERT INTO power_types (id, new_weapon)
+VALUES
+    (1, 2),
+    (2, 3);
+
+-- Static power-up placements for the level.
+INSERT INTO powerup (id, x_position, y_position, radius, move_speed_x, move_speed_y, power_type)
+VALUES
+    (1, 300, 260, 12, 0, -25, 1),
+    (2, 420, 520, 12, 0, -25, 2);
+
 -- Player starts near the bottom of a 720 x 900 screen.
 INSERT INTO player (x_position, y_position, radius, move_speed_x, move_speed_y, lives, weapon)
 VALUES (360, 790, 18, 0, 0, 10, 1);

@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS weapon(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fire_rate INT DEFAULT 1, --delay between shots
     radius INT DEFAULT 2, --defines hitbox of the bullet
-    x_speed INT DEFAULT 0,
+    x_speed INT DEFAULT 0, --if not 0 weapon fires extra bullets with +- x_speed
     y_speed INT DEFAULT 2, --negative when enemy
     foreign key (id) references entity(weapon),
     foreign key (id) references player(weapon),

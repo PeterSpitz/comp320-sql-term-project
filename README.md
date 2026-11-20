@@ -124,9 +124,12 @@ Checklist of included logic
   screen: move towards end, update score
   level: use random generation
 
-Prompt used:
+Prompts used:
 
 create a basic game from the respository.
 store the result in index.html.
 It will be a simple vertical plane shooter with the screen/player traveling upwards and enemies spawn at the top of the screen.
 create a simple level and store it in level_map.sql as a set of incert statements holding initial values for the level.
+
+add inserts to level_map.sql to add powerups to the game.
+they will take the form of increased fire rate or firing at angles
