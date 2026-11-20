@@ -1,5 +1,27 @@
-UPDATE p SET p.lives = p.lives - 1 FROM player p
-JOIN bullet b ON (
-    (power(power(p.x_position - b.x_position, 2) + power(p.y_position - b.y_position, 2)),0.5) < (p.radius + b.radius)
-) --check if the distance between the entity and bullet is less than the sum of their radii
-WHERE b.friendly = FALSE; --check if bullet is from enemies
+UPDATE player
+SET lives = CASE
+    WHEN lives > 0 THEN lives - 1
+    ELSE 0
+END
+WHERE EXISTS (
+    SELECT 1
+    FROM bullet b
+    WHERE b.friendly = FALSE
+    AND (
+        (player.x_position - b.x_position) * (player.x_position - b.x_position)
+        + (player.y_position - b.y_position) * (player.y_position - b.y_position)
+        < (player.radius + b.radius) * (player.radius + b.radius)
+    )
+); --remove one life once per run if an enemy bullet overlaps the player
+
+DELETE FROM bullet
+WHERE friendly = FALSE
+AND EXISTS (
+    SELECT 1
+    FROM player p
+    WHERE (
+        (p.x_position - bullet.x_position) * (p.x_position - bullet.x_position)
+        + (p.y_position - bullet.y_position) * (p.y_position - bullet.y_position)
+        < (p.radius + bullet.radius) * (p.radius + bullet.radius)
+    )
+); --consume enemy bullets that hit the player

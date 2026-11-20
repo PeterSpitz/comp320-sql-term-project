@@ -1,11 +1,37 @@
-UPDATE player SET
-    weapon =
-        CASE
-            WHEN pt.new_weapon IS NOT NULL THEN pt.new_weapon
-            ELSE p.weapon
-        END
-FROM player p
-JOIN powerup pu ON (
-    (power(power(p.x_position - pu.x_position, 2) + power(p.y_position - pu.y_position, 2)),0.5) < (p.radius + pu.radius)
-) --check if the distance between the player and powerup is less than the sum of their radii
-JOIN power_types pt ON pu.power_type = pt.id;
+UPDATE player
+SET weapon = CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM powerup pu
+        WHERE
+            (player.x_position - pu.x_position) * (player.x_position - pu.x_position)
+            + (player.y_position - pu.y_position) * (player.y_position - pu.y_position)
+            < (player.radius + pu.radius) * (player.radius + pu.radius)
+    )
+    THEN (
+        SELECT pt.new_weapon
+        FROM powerup pu
+        JOIN power_types pt ON pt.id = pu.power_type
+        WHERE
+            (player.x_position - pu.x_position) * (player.x_position - pu.x_position)
+            + (player.y_position - pu.y_position) * (player.y_position - pu.y_position)
+            < (player.radius + pu.radius) * (player.radius + pu.radius)
+        LIMIT 1
+    )
+    ELSE weapon
+END
+; --equip the weapon from one overlapping powerup
+
+DELETE FROM powerup
+WHERE EXISTS (
+    SELECT 1
+    FROM player p
+    WHERE
+        (
+            (p.x_position - powerup.x_position) * (p.x_position - powerup.x_position)
+            + (p.y_position - powerup.y_position) * (p.y_position - powerup.y_position)
+            < (p.radius + powerup.radius) * (p.radius + powerup.radius)
+        )
+); --consume powerups that hit the player
+
+--unsure how to handle edge cases where multiple powerups overlap the player at once

@@ -1,6 +1,13 @@
-DROP FROM TABLE powerup WHERE id IN
-    (SELECT p.id FROM powerup p
-    JOIN screen s ON (
-        (p.x_position < 0 OR p.x_position > s.width) OR
-        (p.y_position < s.current_y_position OR p.y_position > (s.current_y_position + s.height))
-    )); --check if the powerup is off screen
+DELETE FROM powerup
+WHERE EXISTS (
+    SELECT 1
+    FROM screen s
+    WHERE
+        (powerup.x_position + powerup.radius < 0)
+        OR
+        (powerup.x_position - powerup.radius > s.width)
+        OR
+        (powerup.y_position + powerup.radius < s.current_y_position)
+        OR
+        (powerup.y_position - powerup.radius > s.current_y_position + s.height)
+); --delete a powerup when its hitbox is outside the current screen

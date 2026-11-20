@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS entity(
     move_speed_y INT DEFAULT 0, --speed of the entity along the y-axis
     lives INT DEFAULT 1, --1 for basic enemies, 5 for special enemies, 50 for boss
     weapon INT DEFAULT 0,
-    has_powerup BOOLEAN DEFAULT FALSE, --if true, entity will drop a powerup when killed
     powerup INT, --null if no powerup
     spawned INT DEFAULT 0, --0 if not spawned yet, 1 if spawned, 2 if killed, 3 if despawned off screen
     foreign key (weapon) references weapon(id)
@@ -42,12 +41,13 @@ CREATE TABLE IF NOT EXISTS player(
     max_move_speed_y INT DEFAULT 2,
     lives INT DEFAULT 10,
     weapon INT DEFAULT 0,
-    foreign key (weapon) references weapon(id)
+    foreign key (weapon) references weapon(id),
 );
 
 CREATE TABLE IF NOT EXISTS weapon(
     id INT PRIMARY KEY,
     fire_rate INT DEFAULT 1, --delay between shots
+    radius INT DEFAULT 2, --defines hitbox of the bullet
     bullet_spread INT NOT NULL, --direction and number of bullets fired
     direction BOOLEAN DEFAULT FALSE, --TRUE for player, FALSE for enemy meaning negative y speed
     foreign key (id) references entity(weapon),
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS bullet( --entry deleted when off screen
     id INT PRIMARY KEY, --created by weapons. does not depend on the weapon used to create it
     x_position INT NOT NULL,
     y_position INT NOT NULL,
-    radius INT DEFAULT 1, --defines hitbox of the bullet
+    radius INT DEFAULT 2, --defines hitbox of the bullet
     x_speed INT NOT NULL,
     y_speed INT NOT NULL,
     friendly BOOLEAN NOT NULL --TRUE player bullets cannot damage player. enemies cannot damage enemies

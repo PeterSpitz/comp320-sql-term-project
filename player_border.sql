@@ -1,15 +1,18 @@
-UPDATE player SET --keep player on screen
-    x_position = 
-        CASE 
-            WHEN p.x_position-p.radius < 0 THEN p.radius
-            WHEN p.x_position+p.radius > s.width THEN s.width - p.radius
-            ELSE p.x_position
-        END,
-    y_position =
-        CASE 
-            WHEN p.y_position-p.radius < s.current_y_position THEN s.current_y_position + p.radius
-            WHEN p.y_position+p.radius > s.current_y_position+s.height THEN s.current_y_position + s.height - p.radius
-            ELSE p.y_position
-        END
-FROM player p
-JOIN screen s ON (1=1); --check if player is off screen
+UPDATE player
+SET
+    x_position = CASE
+        WHEN player.x_position - player.radius < 0 THEN player.radius
+        WHEN player.x_position + player.radius >
+            (SELECT s.width FROM screen s)
+            THEN (SELECT s.width FROM screen s) - player.radius
+        ELSE player.x_position
+    END,
+    y_position = CASE
+        WHEN player.y_position - player.radius <
+            (SELECT s.current_y_position FROM screen s)
+            THEN (SELECT s.current_y_position FROM screen s) + player.radius
+        WHEN player.y_position + player.radius >
+            (SELECT s.current_y_position + s.height FROM screen s)
+            THEN (SELECT s.current_y_position + s.height FROM screen s) - player.radius
+        ELSE player.y_position
+    END; --keep player within the current screen bounds

@@ -1,6 +1,15 @@
-UPDATE entity SET spawned = 3 FROM entity e --check if entity has left without being killed
-JOIN screen s ON (
-    (e.x_position < 0 OR e.x_position > s.width) OR 
-    (e.y_position < s.current_y_position)
-)
-WHERE e.spawned = 1;
+UPDATE entity
+SET spawned = 3
+WHERE spawned = 1
+AND EXISTS (
+    SELECT 1
+    FROM screen s
+    WHERE
+        (entity.x_position + entity.radius < 0)
+        OR
+        (entity.x_position - entity.radius > s.width)
+        OR
+        (entity.y_position + entity.radius < s.current_y_position)
+        OR
+        (entity.y_position - entity.radius > s.current_y_position + s.height)
+); --check if an entity has left the screen without being killed

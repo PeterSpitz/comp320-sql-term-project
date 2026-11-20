@@ -1,5 +1,8 @@
-UPDATE entity SET spawned = 1 FROM entity e --check if entity entered the screen
-JOIN screen s ON (
-    (e.y_position < s.current_y_position + s.height)
-)
-WHERE e.spawned = 0;
+UPDATE entity
+SET spawned = 1
+WHERE spawned = 0
+AND EXISTS (
+    SELECT 1
+    FROM screen s
+    WHERE entity.y_position - entity.radius <= s.current_y_position + s.height
+); --spawn when the entity's hitbox enters the screen

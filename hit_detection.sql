@@ -1,15 +1,34 @@
-UPDATE entity SET
+UPDATE entity
+SET
     lives = CASE
-        WHEN e.lives > 1 THEN e.lives - 1
-        ELSE e.lives
+        WHEN lives > 1 THEN lives - 1
+        ELSE lives
     END,
     spawned = CASE
-        WHEN e.lives = 1 THEN 2
-        ELSE e.spawned
+        WHEN lives = 1 THEN 2
+        ELSE spawned
     END
-FROM entity e
-JOIN bullet b ON (
-    (power(power(e.x_position - b.x_position, 2) + power(e.y_position - b.y_position, 2)),0.5) < (e.radius + b.radius)
-) --check if the distance between the entity and bullet is less than the sum of their radii
-WHERE e.spawned = 1 --check if entity has spawned
-AND b.friendly = TRUE; --check if bullet is from player
+WHERE spawned = 1
+AND EXISTS (
+    SELECT 1
+    FROM bullet b
+    WHERE b.friendly = TRUE
+    AND (
+        (entity.x_position - b.x_position) * (entity.x_position - b.x_position)
+        + (entity.y_position - b.y_position) * (entity.y_position - b.y_position)
+        < (entity.radius + b.radius) * (entity.radius + b.radius)
+    )
+); --hit one spawned entity once per run, preserving its remaining lives
+
+DELETE FROM bullet
+WHERE friendly = TRUE
+AND EXISTS (
+    SELECT 1
+    FROM entity e
+    WHERE e.spawned = 1
+    AND (
+        (e.x_position - bullet.x_position) * (e.x_position - bullet.x_position)
+        + (e.y_position - bullet.y_position) * (e.y_position - bullet.y_position)
+        < (e.radius + bullet.radius) * (e.radius + bullet.radius)
+    )
+); --bullet does not get piercing
