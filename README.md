@@ -115,4 +115,11 @@ CREATE TABLE Enrollments (
 | Presentataion | 20 |
 | **Total**             | **100** |
 
+Checklist of included logic
 
+  player:
+  enemy:
+  bullets:
+  powerups:
+  screen:
+  level:
