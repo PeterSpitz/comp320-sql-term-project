@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS entity(
-    id INT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     x_position INT NOT NULL,
     y_position INT NOT NULL,
     radius INT DEFAULT 1, --defines hitbox of the entity
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS entity(
 );
 
 CREATE TABLE IF NOT EXISTS power_types(
-    id INT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     new_weapon INT NOT NULL, --new weapon for player
     foreign key (new_weapon) references weapon(id),
     foreign key (id) references entity(powerup),
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS power_types(
 );
 
 CREATE TABLE IF NOT EXISTS powerup( --entry deleted when off screen
-    id INT PRIMARY KEY, --cannot interact with bullets/entities
+    id INTEGER PRIMARY KEY AUTOINCREMENT, --cannot interact with bullets/entities
     x_position INT NOT NULL,
     y_position INT NOT NULL,
     radius INT DEFAULT 1,
@@ -41,35 +41,28 @@ CREATE TABLE IF NOT EXISTS player(
     max_move_speed_y INT DEFAULT 2,
     lives INT DEFAULT 10,
     weapon INT DEFAULT 0,
-    foreign key (weapon) references weapon(id),
+    foreign key (weapon) references weapon(id)
 );
 
 CREATE TABLE IF NOT EXISTS weapon(
-    id INT PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     fire_rate INT DEFAULT 1, --delay between shots
     radius INT DEFAULT 2, --defines hitbox of the bullet
-    bullet_spread INT NOT NULL, --direction and number of bullets fired
-    direction BOOLEAN DEFAULT FALSE, --TRUE for player, FALSE for enemy meaning negative y speed
+    x_speed INT DEFAULT 0,
+    y_speed INT DEFAULT 2, --negative when enemy
     foreign key (id) references entity(weapon),
     foreign key (id) references player(weapon),
     foreign key (id) references power_types(new_weapon),
     foreign key (id) references spread(id)
 );
 
-CREATE TABLE IF NOT EXISTS spread(
-    id INT PRIMARY KEY,
-    x_speed INT NOT NULL,
-    y_speed INT NOT NULL, --negative when enemy
-    foreign key (id) references weapon(bullet_spread)
-);
-
 CREATE TABLE IF NOT EXISTS bullet( --entry deleted when off screen
-    id INT PRIMARY KEY, --created by weapons. does not depend on the weapon used to create it
+    id INTEGER PRIMARY KEY AUTOINCREMENT, --created by weapons. does not depend on the weapon used to create it
     x_position INT NOT NULL,
     y_position INT NOT NULL,
     radius INT DEFAULT 2, --defines hitbox of the bullet
-    x_speed INT NOT NULL,
-    y_speed INT NOT NULL,
+    x_speed INT DEFAULT 0,
+    y_speed INT DEFAULT 2,
     friendly BOOLEAN NOT NULL --TRUE player bullets cannot damage player. enemies cannot damage enemies
 );
 
