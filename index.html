@@ -121,6 +121,7 @@
     <canvas id="game" width="720" height="900"></canvas>
     <div class="hud" aria-live="polite">
       <span>SCORE <strong id="score">0000</strong></span>
+      <span>WEAPON <strong id="weapon">STANDARD</strong></span>
       <span>SHIELD <strong id="lives">10</strong></span>
     </div>
     <section class="overlay" id="overlay">
@@ -139,6 +140,7 @@
       const ctx = canvas.getContext("2d");
       const scoreLabel = document.getElementById("score");
       const livesLabel = document.getElementById("lives");
+      const weaponLabel = document.getElementById("weapon");
       const overlay = document.getElementById("overlay");
       const title = document.getElementById("title");
       const message = document.getElementById("message");
@@ -158,6 +160,8 @@
       let enemyBullets = [];
       let particles = [];
       let stars = [];
+      let powerups = [];
+      let levelQueue = [];
 
       function makeStars() {
         stars = Array.from({ length: 90 }, () => ({
@@ -169,13 +173,26 @@
       }
 
       function resetGame() {
-        player = { x: canvas.width / 2, y: canvas.height - 110, radius: 18, speed: 330, fireCooldown: 0 };
+        player = {
+          x: canvas.width / 2,
+          y: canvas.height - 110,
+          radius: 18,
+          speed: 330,
+          fireCooldown: 0,
+          weaponMode: "standard"
+        };
         bullets = [];
         enemies = [];
         enemyBullets = [];
         particles = [];
+        powerups = [
+          { x: 300, y: 260, radius: 12, vx: 0, vy: -25, type: "rapid", activeAt: 4 },
+          { x: 420, y: 520, radius: 12, vx: 0, vy: -25, type: "spread", activeAt: 12 }
+        ];
+        powerups.forEach(powerup => { powerup.spawned = false; });
+        levelQueue = makeLevelQueue();
         elapsed = 0;
-        spawnTimer = 0.6;
+        spawnTimer = 0;
         score = 0;
         lives = 10;
         scroll = 0;
@@ -185,6 +202,13 @@
       function updateHud() {
         scoreLabel.textContent = String(score).padStart(4, "0");
         livesLabel.textContent = lives;
+        weaponLabel.textContent = player
+          ? player.weaponMode === "rapid"
+            ? "RAPID"
+            : player.weaponMode === "spread"
+              ? "SPREAD"
+              : "STANDARD"
+          : "STANDARD";
       }
 
       function startGame() {
@@ -221,10 +245,36 @@
         });
       }
 
+      function makeLevelQueue() {
+        const formations = [
+          { activeAt: 0.5, x: [120, 240, 360, 480, 600], speed: 75, lives: 1 },
+          { activeAt: 5, x: [180, 300, 420, 540], speed: 95, lives: 1 },
+          { activeAt: 10, x: [220, 500, 360], speed: 110, lives: 3 },
+          { activeAt: 16, x: [120, 240, 360, 480, 600], speed: 125, lives: 1 }
+        ];
+        return formations.flatMap((formation, formationIndex) =>
+          formation.x.map((x, index) => ({
+            activeAt: formation.activeAt + index * 0.18,
+            x,
+            speed: formation.speed,
+            lives: formation.lives,
+            radius: formation.lives === 3 ? 23 : 16,
+            phase: formationIndex + index,
+            spawned: false
+          }))
+        );
+      }
+
       function firePlayer() {
         if (player.fireCooldown <= 0) {
-          bullets.push({ x: player.x, y: player.y - 24, radius: 4, vy: -620 });
-          player.fireCooldown = 0.16;
+          bullets.push({ x: player.x, y: player.y - 24, radius: 4, vx: 0, vy: -620 });
+          if (player.weaponMode === "spread") {
+            bullets.push(
+              { x: player.x, y: player.y - 24, radius: 4, vx: 180, vy: -620 },
+              { x: player.x, y: player.y - 24, radius: 4, vx: -180, vy: -620 }
+            );
+          }
+          player.fireCooldown = player.weaponMode === "rapid" ? 0.05 : 0.16;
         }
       }
 
@@ -282,14 +332,34 @@
         if (keys.has(" ") || keys.has("z")) firePlayer();
         player.fireCooldown -= dt;
 
-        spawnTimer -= dt;
-        if (spawnTimer <= 0) {
-          spawnEnemy();
-          const difficulty = Math.max(0.38, 1.15 - elapsed / 55);
-          spawnTimer = difficulty + Math.random() * 0.45;
-        }
+        levelQueue.forEach(entry => {
+          if (!entry.spawned && elapsed >= entry.activeAt) {
+            entry.spawned = true;
+            enemies.push({
+              x: entry.x,
+              y: -entry.radius - 24,
+              radius: entry.radius,
+              type: entry.lives > 1 ? "heavy" : "scout",
+              lives: entry.lives,
+              speed: entry.speed,
+              phase: entry.phase,
+              fireCooldown: 1.2 + entry.phase * 0.12
+            });
+          }
+        });
 
-        bullets.forEach(bullet => bullet.y += bullet.vy * dt);
+        powerups.forEach(powerup => {
+          if (!powerup.spawned && elapsed >= powerup.activeAt) powerup.spawned = true;
+          if (powerup.spawned) {
+            powerup.x += powerup.vx * dt;
+            powerup.y += powerup.vy * dt;
+          }
+        });
+
+        bullets.forEach(bullet => {
+          bullet.x += bullet.vx * dt;
+          bullet.y += bullet.vy * dt;
+        });
         enemyBullets.forEach(bullet => {
           bullet.x += bullet.vx * dt;
           bullet.y += bullet.vy * dt;
@@ -305,7 +375,11 @@
           }
         });
 
-        bullets = bullets.filter(bullet => bullet.y > -20);
+        bullets = bullets.filter(bullet =>
+          bullet.y > -20 &&
+          bullet.x > -30 &&
+          bullet.x < canvas.width + 30
+        );
         enemyBullets = enemyBullets.filter(bullet =>
           bullet.x > -30 && bullet.x < canvas.width + 30 &&
           bullet.y > -30 && bullet.y < canvas.height + 30
@@ -351,6 +425,22 @@
           }
         }
 
+        for (let i = powerups.length - 1; i >= 0; i--) {
+          const powerup = powerups[i];
+          if (powerup.spawned && circleHit(powerup, player)) {
+            player.weaponMode = powerup.type;
+            powerups.splice(i, 1);
+            burst(player.x, player.y, powerup.type === "rapid" ? "#70ffb1" : "#d99cff", 18);
+            updateHud();
+          } else if (
+            powerup.spawned &&
+            (powerup.y < -30 || powerup.y > canvas.height + 30 ||
+              powerup.x < -30 || powerup.x > canvas.width + 30)
+          ) {
+            powerups.splice(i, 1);
+          }
+        }
+
         for (let i = particles.length - 1; i >= 0; i--) {
           const particle = particles[i];
           particle.x += particle.vx * dt;
@@ -367,7 +457,7 @@
           }
         });
 
-        if (elapsed >= 75) endGame(true);
+        if (elapsed >= 3200 / 75) endGame(true);
       }
 
       function drawBackground() {
@@ -445,6 +535,24 @@
 
       function draw() {
         drawBackground();
+
+        powerups.forEach(powerup => {
+          if (!powerup.spawned) return;
+          ctx.save();
+          ctx.translate(powerup.x, powerup.y);
+          ctx.rotate(powerup.type === "rapid" ? elapsed : -elapsed);
+          ctx.shadowColor = powerup.type === "rapid" ? "#70ffb1" : "#d99cff";
+          ctx.shadowBlur = 16;
+          ctx.fillStyle = powerup.type === "rapid" ? "#70ffb1" : "#d99cff";
+          ctx.beginPath();
+          ctx.moveTo(0, -powerup.radius);
+          ctx.lineTo(powerup.radius, 0);
+          ctx.lineTo(0, powerup.radius);
+          ctx.lineTo(-powerup.radius, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        });
 
         ctx.fillStyle = "#87efff";
         ctx.shadowColor = "#87efff";
