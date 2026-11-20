@@ -12,4 +12,4 @@ UPDATE player SET --keep player on screen
             ELSE p.y_position
         END
 FROM player p
-JOIN screen s ON (1=1) --check if player is off screen
+JOIN screen s ON (1=1); --check if player is off screen

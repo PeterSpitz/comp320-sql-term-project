@@ -12,4 +12,4 @@ JOIN bullet b ON (
     (power(power(e.x_position - b.x_position, 2) + power(e.y_position - b.y_position, 2)),0.5) < (e.radius + b.radius)
 ) --check if the distance between the entity and bullet is less than the sum of their radii
 WHERE e.spawned = 1 --check if entity has spawned
-AND b.friendly = TRUE --check if bullet is from player
+AND b.friendly = TRUE; --check if bullet is from player

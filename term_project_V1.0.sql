@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS weapon(
     id INT PRIMARY KEY,
     fire_rate INT DEFAULT 1, --delay between shots
     bullet_spread INT NOT NULL, --direction and number of bullets fired
+    direction BOOLEAN DEFAULT FALSE, --TRUE for player, FALSE for enemy meaning negative y speed
     foreign key (id) references entity(weapon),
     foreign key (id) references player(weapon),
     foreign key (id) references power_types(new_weapon),
@@ -58,7 +59,7 @@ CREATE TABLE IF NOT EXISTS weapon(
 CREATE TABLE IF NOT EXISTS spread(
     id INT PRIMARY KEY,
     x_speed INT NOT NULL,
-    y_speed INT NOT NULL, -- + for up/player, - for down/enemy
+    y_speed INT NOT NULL, --negative when enemy
     foreign key (id) references weapon(bullet_spread)
 );
 
@@ -67,7 +68,8 @@ CREATE TABLE IF NOT EXISTS bullet( --entry deleted when off screen
     x_position INT NOT NULL,
     y_position INT NOT NULL,
     radius INT DEFAULT 1, --defines hitbox of the bullet
-    direction INT NOT NULL, --angle of the bullet's trajectory
+    x_speed INT NOT NULL,
+    y_speed INT NOT NULL,
     friendly BOOLEAN NOT NULL --TRUE player bullets cannot damage player. enemies cannot damage enemies
 );
 
