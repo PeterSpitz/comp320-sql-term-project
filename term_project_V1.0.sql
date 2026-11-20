@@ -37,8 +37,6 @@ CREATE TABLE IF NOT EXISTS player(
     radius INT DEFAULT 1, --defines hitbox of the entity
     move_speed_x INT DEFAULT 0,
     move_speed_y INT DEFAULT 0,
-    max_move_speed_x INT DEFAULT 2,
-    max_move_speed_y INT DEFAULT 2,
     lives INT DEFAULT 10,
     weapon INT DEFAULT 0,
     foreign key (weapon) references weapon(id)
@@ -63,11 +61,13 @@ CREATE TABLE IF NOT EXISTS bullet( --entry deleted when off screen
     radius INT DEFAULT 2, --defines hitbox of the bullet
     x_speed INT DEFAULT 0,
     y_speed INT DEFAULT 2,
+    hit BOOLEAN DEFAULT FALSE; --flag for if there was a hit
     friendly BOOLEAN NOT NULL --TRUE player bullets cannot damage player. enemies cannot damage enemies
 );
 
 CREATE TABLE IF NOT EXISTS screen(
     current_y_position INT DEFAULT 0, --entities spawn when entity y < current_y + height
+    max_y_position INT NOT NULL,
     screen_speed INT DEFAULT 1, --speed of the screen moving downwards
     width INT NOT NULL,
     height INT NOT NULL,

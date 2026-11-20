@@ -33,5 +33,3 @@ WHERE EXISTS (
             < (p.radius + powerup.radius) * (p.radius + powerup.radius)
         )
 ); --consume powerups that hit the player
-
---unsure how to handle edge cases where multiple powerups overlap the player at once

@@ -1,3 +1,18 @@
+UPDATE bullet b --make table with bullets that overlap enemies
+JOIN entity e ON  ( 
+                  (e.x_position - b.x_position) * (e.x_position - b.x_position)
+                  + (e.y_position - b.y_position) * (e.y_position - b.y_position)
+                  < (e.radius + b.radius) * (e.radius + b.radius)
+                  )
+SET
+    hit = TRUE; --mark bullets that hit
+
+INSERT INTO powerup (x_position, y_position, radius, move_speed_x, move_speed_y, power_type)
+SELECT 
+JOIN 
+WHERE 
+--spawn powerup if available at enemy position when enemy is hit with 1 hp
+
 UPDATE entity
 SET
     lives = CASE
@@ -21,14 +36,4 @@ AND EXISTS (
 ); --hit one spawned entity once per run, preserving its remaining lives
 
 DELETE FROM bullet
-WHERE friendly = TRUE
-AND EXISTS (
-    SELECT 1
-    FROM entity e
-    WHERE e.spawned = 1
-    AND (
-        (e.x_position - bullet.x_position) * (e.x_position - bullet.x_position)
-        + (e.y_position - bullet.y_position) * (e.y_position - bullet.y_position)
-        < (e.radius + bullet.radius) * (e.radius + bullet.radius)
-    )
-); --bullet does not get piercing
+WHERE hit = TRUE; --bullet does not get piercing/multi hit

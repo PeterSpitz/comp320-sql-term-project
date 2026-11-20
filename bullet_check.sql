@@ -1,3 +1,8 @@
+UPDATE bullet
+SET
+    x_position = x_position + x_speed,
+    y_position = y_position + y_speed; --update bullet's position
+
 DELETE FROM bullet
 WHERE EXISTS (
     SELECT 1
@@ -11,4 +16,3 @@ WHERE EXISTS (
         OR
         (bullet.y_position - bullet.radius > s.current_y_position + s.height)
 ); --delete a bullet when its hitbox is outside the current screen
-    
