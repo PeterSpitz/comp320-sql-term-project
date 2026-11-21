@@ -1,0 +1,71 @@
+DBML
+
+Table entity {
+  id integer [pk, increment]
+  x_position int [not null]
+  y_position int [not null]
+  radius int [default: 1, note: 'defines hitbox of the entity']
+  move_speed_x int [default: 0, note: 'speed of the entity along the x-axis']
+  move_speed_y int [default: 0, note: 'speed of the entity along the y-axis']
+  lives int [default: 1, note: '1 for basic enemies, 5 for special enemies, 50 for boss']
+  weapon int [default: 0, ref: > weapon.id]
+  powerup int [ref: > power_types.id, note: 'null if no powerup']
+  spawned int [default: 0, note: '0 if not spawned yet, 1 if spawned, 2 if killed, 3 if despawned off screen']
+}
+
+Table power_types {
+  id integer [pk, increment]
+  new_weapon int [not null, ref: > weapon.id, note: 'new weapon for player']
+}
+
+Table powerup {
+  id integer [pk, increment, note: 'cannot interact with bullets/entities']
+  x_position int [not null]
+  y_position int [not null]
+  radius int [default: 1]
+  move_speed_x int [default: 0]
+  move_speed_y int [default: -1]
+  power_type int [not null, ref: > power_types.id]
+
+  Note: 'entry deleted when off screen'
+}
+
+Table player {
+  x_position int [not null]
+  y_position int [not null]
+  radius int [default: 1, note: 'defines hitbox of the entity']
+  move_speed_x int [default: 0]
+  move_speed_y int [default: 0]
+  lives int [default: 10]
+  weapon int [default: 0, ref: > weapon.id]
+}
+
+Table weapon {
+  id integer [pk, increment]
+  fire_rate int [default: 1, note: 'delay between shots']
+  radius int [default: 2, note: 'defines hitbox of the bullet']
+  x_speed int [default: 0, note: 'if not 0 weapon fires extra bullets with +- x_speed']
+  y_speed int [default: 2, note: 'negative when enemy']
+}
+
+Table bullet {
+  id integer [pk, increment, note: 'created by weapons. does not depend on the weapon used to create it']
+  x_position int [not null]
+  y_position int [not null]
+  radius int [default: 2, note: 'defines hitbox of the bullet']
+  x_speed int [default: 0]
+  y_speed int [default: 2]
+  hit boolean [default: false, note: 'flag for if there was a hit']
+  friendly boolean [not null, note: 'TRUE player bullets cannot damage player. enemies cannot damage enemies']
+
+  Note: 'entry deleted when off screen'
+}
+
+Table screen {
+  current_y_position int [default: 0, note: 'entities spawn when entity y < current_y + height']
+  max_y_position int [not null]
+  screen_speed int [default: 1, note: 'speed of the screen moving downwards']
+  width int [not null]
+  height int [not null]
+  score int [default: 0, note: 'calculated from level_map spawned=2 count']
+}
