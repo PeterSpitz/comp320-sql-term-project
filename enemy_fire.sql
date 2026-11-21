@@ -6,6 +6,10 @@ SELECT e.x_position, e.y_position + e.radius, w.radius,
         WHEN 3 THEN -w.x_speed
         END, -(w.y_speed), FALSE FROM entity e
 JOIN weapon w ON e.weapon = w.id
-JOIN (VALUES (1),(2),(3)) AS slot(num) ON slot.num = 1 OR w.x_speed <> 0
+JOIN (
+    SELECT 1 AS num
+    UNION ALL SELECT 2
+    UNION ALL SELECT 3
+) AS slot ON slot.num = 1 OR w.x_speed <> 0
 
 WHERE e.spawned = 1; --same logic as player with direction reversed and flag changed

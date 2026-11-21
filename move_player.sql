@@ -1,6 +1,6 @@
 UPDATE player --move player
-SET x_position = x_position + move_x_speed,
-    y_position = y_position + move_y_speed;
+SET x_position = x_position + move_speed_x,
+    y_position = y_position + move_speed_y;
 
 UPDATE player --check if player is still inside the screen
 SET

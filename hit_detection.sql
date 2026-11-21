@@ -1,14 +1,20 @@
-UPDATE bullet b --make table with bullets that overlap enemies
-JOIN entity e ON  ( 
-                  (e.x_position - b.x_position) * (e.x_position - b.x_position)
-                  + (e.y_position - b.y_position) * (e.y_position - b.y_position)
-                  < (e.radius + b.radius) * (e.radius + b.radius)
-                  )
-SET
-    hit = TRUE; --mark bullets that hit
+UPDATE bullet
+SET hit = TRUE
+WHERE friendly = TRUE
+AND EXISTS (
+    SELECT 1
+    FROM entity e
+    WHERE e.spawned = 1
+    AND (
+        (e.x_position - bullet.x_position) * (e.x_position - bullet.x_position)
+        + (e.y_position - bullet.y_position) * (e.y_position - bullet.y_position)
+        < (e.radius + bullet.radius) * (e.radius + bullet.radius)
+    )
+); --mark player bullets that hit
 
-INSERT INTO powerup (x_position, y_position, radius, move_speed_x, move_speed_y, power_type)
-SELECT (e.x_position, e.y_position, 2, e.move_speed_x, e.move_speed_y, e.powerup) FROM entity e --powerups move with the same momentum as killed enemies
+INSERT INTO powerup (x_position, y_position, radius, move_speed_x, move_speed_y, new_weapon)
+SELECT DISTINCT e.x_position, e.y_position, 2, e.move_speed_x, e.move_speed_y, e.powerup
+FROM entity e --powerups move with the same momentum as killed enemies
 JOIN bullet b ON (
                  (e.x_position - b.x_position) * (e.x_position - b.x_position)
                  + (e.y_position - b.y_position) * (e.y_position - b.y_position)

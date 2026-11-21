@@ -9,9 +9,8 @@ SET weapon = CASE
             < (player.radius + pu.radius) * (player.radius + pu.radius)
     )
     THEN (
-        SELECT pt.new_weapon --update equiped weapon
+        SELECT pu.new_weapon --update equiped weapon
         FROM powerup pu
-        JOIN power_types pt ON pt.id = pu.power_type
         WHERE
             (player.x_position - pu.x_position) * (player.x_position - pu.x_position)
             + (player.y_position - pu.y_position) * (player.y_position - pu.y_position)

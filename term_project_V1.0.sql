@@ -6,18 +6,11 @@ CREATE TABLE IF NOT EXISTS entity(
     move_speed_x INT DEFAULT 0, --speed of the entity along the x-axis
     move_speed_y INT DEFAULT 0, --speed of the entity along the y-axis
     lives INT DEFAULT 1, --1 for basic enemies, 5 for special enemies, 50 for boss
-    weapon INT DEFAULT 0,
-    powerup INT, --null if no powerup
+    weapon INT DEFAULT 1,
+    powerup INT, --weapon granted when dropped; null if no powerup
     spawned INT DEFAULT 0, --0 if not spawned yet, 1 if spawned, 2 if killed, 3 if despawned off screen
-    foreign key (weapon) references weapon(id)
-);
-
-CREATE TABLE IF NOT EXISTS power_types(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    new_weapon INT NOT NULL, --new weapon for player
-    foreign key (new_weapon) references weapon(id),
-    foreign key (id) references entity(powerup),
-    foreign key (id) references powerup(power_type)
+    foreign key (weapon) references weapon(id),
+    foreign key (powerup) references weapon(id)
 );
 
 CREATE TABLE IF NOT EXISTS powerup( --entry deleted when off screen
@@ -27,8 +20,8 @@ CREATE TABLE IF NOT EXISTS powerup( --entry deleted when off screen
     radius INT DEFAULT 1,
     move_speed_x INT DEFAULT 0,
     move_speed_y INT DEFAULT -1,
-    power_type INT NOT NULL,
-    foreign key (power_type) references power_types(id)
+    new_weapon INT NOT NULL, --new weapon for player
+    foreign key (new_weapon) references weapon(id)
 );
 
 CREATE TABLE IF NOT EXISTS player(
@@ -38,7 +31,7 @@ CREATE TABLE IF NOT EXISTS player(
     move_speed_x INT DEFAULT 0,
     move_speed_y INT DEFAULT 0,
     lives INT DEFAULT 10,
-    weapon INT DEFAULT 0,
+    weapon INT DEFAULT 1,
     foreign key (weapon) references weapon(id)
 );
 
@@ -47,11 +40,7 @@ CREATE TABLE IF NOT EXISTS weapon(
     fire_rate INT DEFAULT 1, --delay between shots
     radius INT DEFAULT 2, --defines hitbox of the bullet
     x_speed INT DEFAULT 0, --if not 0 weapon fires extra bullets with +- x_speed
-    y_speed INT DEFAULT 2, --negative when enemy
-    foreign key (id) references entity(weapon),
-    foreign key (id) references player(weapon),
-    foreign key (id) references power_types(new_weapon),
-    foreign key (id) references spread(id)
+    y_speed INT DEFAULT 2 --negative when enemy
 );
 
 CREATE TABLE IF NOT EXISTS bullet( --entry deleted when off screen
@@ -61,7 +50,7 @@ CREATE TABLE IF NOT EXISTS bullet( --entry deleted when off screen
     radius INT DEFAULT 2, --defines hitbox of the bullet
     x_speed INT DEFAULT 0,
     y_speed INT DEFAULT 2,
-    hit BOOLEAN DEFAULT FALSE; --flag for if there was a hit
+    hit BOOLEAN DEFAULT FALSE, --flag for if there was a hit
     friendly BOOLEAN NOT NULL --TRUE player bullets cannot damage player. enemies cannot damage enemies
 );
 

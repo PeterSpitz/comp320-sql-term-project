@@ -190,6 +190,7 @@
       const WIDTH = canvas.width;
       const HEIGHT = canvas.height;
       const LEVEL_DURATION = 96;
+      const POWERUP_WEAPONS = { 2: "rapid", 3: "spread" };
 
       const enemyStyles = {
         scout: { hp: 1, radius: 13, speed: 102, score: 100, color: "#ff718e", fire: 0, shape: "diamond" },
@@ -199,25 +200,25 @@
         boss: { hp: 92, radius: 56, speed: 22, score: 6000, color: "#ff426f", fire: .72, shape: "boss" }
       };
 
-      // These timed groups mirror the rows in level_map.sql; the opening wave is at 2%.
+      // Keep this schedule in sync with level_map.sql.
       const spawnPlan = [
         { at: .02, type: "scout", lane: 50, count: 1 },
         { at: .08, type: "scout", lane: 27, count: 2 },
         { at: .14, type: "weaver", lane: 72, count: 2 },
         { at: .20, type: "scout", lane: 18, count: 3 },
-        { at: .26, type: "gunner", lane: 50, count: 1 },
+        { at: .26, type: "gunner", lane: 50, count: 1, dropWeapon: 2 },
         { at: .32, type: "weaver", lane: 78, count: 3 },
-        { at: .38, type: "tank", lane: 34, count: 1 },
+        { at: .38, type: "tank", lane: 34, count: 1, dropWeapon: 3 },
         { at: .44, type: "gunner", lane: 68, count: 2 },
         { at: .50, type: "scout", lane: 22, count: 4 },
-        { at: .56, type: "tank", lane: 72, count: 1 },
+        { at: .56, type: "tank", lane: 72, count: 1, dropWeapon: 2 },
         { at: .62, type: "weaver", lane: 42, count: 3 },
-        { at: .68, type: "gunner", lane: 24, count: 2 },
+        { at: .68, type: "gunner", lane: 24, count: 2, dropWeapon: 3 },
         { at: .73, type: "tank", lane: 53, count: 2 },
-        { at: .78, type: "weaver", lane: 76, count: 4 },
+        { at: .78, type: "weaver", lane: 76, count: 4, dropWeapon: 2 },
         { at: .82, type: "gunner", lane: 36, count: 3 },
-        { at: .86, type: "tank", lane: 66, count: 2 },
-        { at: .90, type: "boss", lane: 50, count: 1, drop: "spread" },
+        { at: .86, type: "tank", lane: 66, count: 2, dropWeapon: 3 },
+        { at: .90, type: "boss", lane: 50, count: 1, dropWeapon: 3 },
         { at: .97, type: "scout", lane: 50, count: 3 }
       ];
 
@@ -286,7 +287,8 @@
             speed: style.speed, score: style.score, color: style.color,
             fireRate: style.fire, fireTimer: .8 + Math.random(),
             phase: Math.random() * Math.PI * 2,
-            drop: group.drop || (Math.random() < .24 ? (Math.random() < .55 ? "rapid" : "spread") : null)
+            drop: POWERUP_WEAPONS[group.dropWeapon]
+              || (Math.random() < .24 ? (Math.random() < .55 ? "rapid" : "spread") : null)
           };
           enemies.push(enemy);
         }
@@ -300,7 +302,7 @@
         for (const shot of shots) {
           bullets.push({
             x: player.x + shot.x * 14, y: player.y - 20,
-            vx: shot.x * 390, vy: shot.y * 560, radius: 4, damage: 1
+            vx: shot.x * 560, vy: shot.y * 560, radius: 4, damage: 1
           });
         }
         particles.push({ x: player.x, y: player.y - 20, vx: 0, vy: -32, life: .12, maxLife: .12, color: "#8df6ff", size: 8 });

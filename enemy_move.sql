@@ -1,6 +1,6 @@
 UPDATE entity SET
-    x_position = x_position + x_speed,
-    y_position = y_position + y_speed
+    x_position = x_position + move_speed_x,
+    y_position = y_position + move_speed_y
 WHERE spawned = 1; --move entity
 
 UPDATE entity

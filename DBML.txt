@@ -8,14 +8,9 @@ Table entity {
   move_speed_x int [default: 0, note: 'speed of the entity along the x-axis']
   move_speed_y int [default: 0, note: 'speed of the entity along the y-axis']
   lives int [default: 1, note: '1 for basic enemies, 5 for special enemies, 50 for boss']
-  weapon int [default: 0, ref: > weapon.id]
-  powerup int [ref: > power_types.id, note: 'null if no powerup']
+  weapon int [default: 1, ref: > weapon.id]
+  powerup int [ref: > weapon.id, note: 'weapon granted when dropped']
   spawned int [default: 0, note: '0 if not spawned yet, 1 if spawned, 2 if killed, 3 if despawned off screen']
-}
-
-Table power_types {
-  id integer [pk, increment]
-  new_weapon int [not null, ref: > weapon.id, note: 'new weapon for player']
 }
 
 Table powerup {
@@ -25,7 +20,7 @@ Table powerup {
   radius int [default: 1]
   move_speed_x int [default: 0]
   move_speed_y int [default: -1]
-  power_type int [not null, ref: > power_types.id]
+  new_weapon int [not null, ref: > weapon.id]
 
   Note: 'entry deleted when off screen'
 }
@@ -37,7 +32,7 @@ Table player {
   move_speed_x int [default: 0]
   move_speed_y int [default: 0]
   lives int [default: 10]
-  weapon int [default: 0, ref: > weapon.id]
+  weapon int [default: 1, ref: > weapon.id]
 }
 
 Table weapon {
@@ -68,4 +63,13 @@ Table screen {
   width int [not null]
   height int [not null]
   score int [default: 0, note: 'calculated from level_map spawned=2 count']
+}
+
+Table level_map {
+  id integer [pk]
+  progress_percent int [not null]
+  enemy_type text [not null]
+  lane_percent int [not null]
+  quantity int [not null, default: 1]
+  drop_weapon int [ref: > weapon.id]
 }
