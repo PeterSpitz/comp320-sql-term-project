@@ -189,7 +189,8 @@
       const statusText = document.getElementById("mission-status");
       const WIDTH = canvas.width;
       const HEIGHT = canvas.height;
-      const LEVEL_DURATION = 96;
+      const LEVEL_DISTANCE = 9280;
+      const SCREEN_SCROLL_SPEED = 150;
       const POWERUP_WEAPONS = { 2: "rapid", 3: "spread" };
 
       const enemyStyles = {
@@ -197,7 +198,7 @@
         weaver: { hp: 2, radius: 15, speed: 82, score: 180, color: "#ffb56c", fire: 2.4, shape: "wing" },
         gunner: { hp: 3, radius: 17, speed: 61, score: 260, color: "#d18bff", fire: 1.65, shape: "hex" },
         tank: { hp: 7, radius: 23, speed: 44, score: 520, color: "#ff536d", fire: 1.3, shape: "tank" },
-        boss: { hp: 92, radius: 56, speed: 22, score: 6000, color: "#ff426f", fire: .72, shape: "boss" }
+        boss: { hp: 92, radius: 56, speed: 0, score: 6000, color: "#ff426f", fire: .72, shape: "boss" }
       };
 
       // Keep this schedule in sync with level_map.sql.
@@ -218,8 +219,7 @@
         { at: .78, type: "weaver", lane: 76, count: 4, dropWeapon: 2 },
         { at: .82, type: "gunner", lane: 36, count: 3 },
         { at: .86, type: "tank", lane: 66, count: 2, dropWeapon: 3 },
-        { at: .90, type: "boss", lane: 50, count: 1, dropWeapon: 3 },
-        { at: .97, type: "scout", lane: 50, count: 3 }
+        { at: .98, type: "boss", lane: 50, count: 1, dropWeapon: 3 }
       ];
 
       const keys = new Set();
@@ -233,7 +233,7 @@
 
       let state = "ready";
       let lastTime = 0;
-      let elapsed = 0;
+      let screenDistance = 0;
       let score = 0;
       let spawnIndex = 0;
       let fireTimer = 0;
@@ -247,7 +247,7 @@
       let particles = [];
 
       function resetGame() {
-        elapsed = 0;
+        screenDistance = 0;
         score = 0;
         spawnIndex = 0;
         fireTimer = 0;
@@ -282,7 +282,8 @@
           const enemy = {
             type: group.type,
             x: WIDTH * group.lane / 100 + spread,
-            y: group.type === "boss" ? 128 : 90 + i * 30,
+            y: group.type === "boss" ? HEIGHT * .4 : 90 + i * 30,
+            worldY: group.type === "boss" ? screenDistance + HEIGHT * .4 : null,
             radius: style.radius, hp: style.hp, maxHp: style.hp,
             speed: style.speed, score: style.score, color: style.color,
             fireRate: style.fire, fireTimer: .8 + Math.random(),
@@ -371,8 +372,8 @@
 
         if (state !== "playing") return;
 
-        elapsed += dt;
-        const progress = Math.min(1, elapsed / LEVEL_DURATION);
+        screenDistance = Math.min(LEVEL_DISTANCE, screenDistance + SCREEN_SCROLL_SPEED * dt);
+        const progress = screenDistance / LEVEL_DISTANCE;
         while (spawnIndex < spawnPlan.length && progress >= spawnPlan[spawnIndex].at) {
           spawnGroup(spawnPlan[spawnIndex]);
           spawnIndex++;
@@ -405,10 +406,14 @@
         for (let i = enemies.length - 1; i >= 0; i--) {
           const enemy = enemies[i];
           enemy.phase += dt * (enemy.type === "boss" ? .75 : 1.8);
-          enemy.y += enemy.speed * dt;
-          if (enemy.type === "weaver") enemy.x += Math.sin(enemy.phase) * 72 * dt;
-          if (enemy.type === "boss") enemy.x = WIDTH / 2 + Math.sin(enemy.phase) * 120;
-          else if (enemy.type === "gunner") enemy.x += Math.sin(enemy.phase) * 20 * dt;
+          if (enemy.type === "boss") {
+            enemy.y = enemy.worldY - screenDistance;
+            enemy.x = WIDTH / 2 + Math.sin(enemy.phase) * 120;
+          } else {
+            enemy.y += enemy.speed * dt;
+            if (enemy.type === "weaver") enemy.x += Math.sin(enemy.phase) * 72 * dt;
+            else if (enemy.type === "gunner") enemy.x += Math.sin(enemy.phase) * 20 * dt;
+          }
           enemy.x = Math.max(enemy.radius + 4, Math.min(WIDTH - enemy.radius - 4, enemy.x));
           if (enemy.fireRate > 0) {
             enemy.fireTimer -= dt;
@@ -417,7 +422,7 @@
               enemy.fireTimer = enemy.fireRate;
             }
           }
-          if (enemy.y > HEIGHT + enemy.radius) enemies.splice(i, 1);
+          if (enemy.type !== "boss" && enemy.y > HEIGHT + enemy.radius) enemies.splice(i, 1);
         }
 
         for (let i = bullets.length - 1; i >= 0; i--) {
@@ -462,6 +467,10 @@
                 });
               }
               enemies.splice(e, 1);
+              if (enemy.type === "boss") {
+                state = "victory";
+                statusText.textContent = "SECTOR CLEAR";
+              }
             }
             break;
           }
@@ -489,11 +498,6 @@
           particle.vy *= Math.max(0, 1 - dt * 1.8);
           particle.life -= dt;
           if (particle.life <= 0) particles.splice(i, 1);
-        }
-
-        if (progress >= 1 && spawnIndex === spawnPlan.length && enemies.length === 0) {
-          state = "victory";
-          statusText.textContent = "SECTOR CLEAR";
         }
       }
 
@@ -595,10 +599,10 @@
         }
         ctx.globalAlpha = 1;
 
-        const elapsedTicks = Math.floor(elapsed * 4) % 80;
+        const scrollTicks = Math.floor(screenDistance) % 80;
         ctx.strokeStyle = "rgba(86, 148, 204, .045)";
         ctx.lineWidth = 1;
-        for (let y = elapsedTicks - 80; y < HEIGHT; y += 80) {
+        for (let y = scrollTicks - 80; y < HEIGHT; y += 80) {
           ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(WIDTH, y); ctx.stroke();
         }
 
@@ -646,7 +650,7 @@
         }
 
         if (player && state !== "ready") {
-          if (player.invulnerable <= 0 || Math.floor(elapsed * 12) % 2 === 0) {
+          if (player.invulnerable <= 0 || Math.floor(screenDistance / SCREEN_SCROLL_SPEED * 12) % 2 === 0) {
             drawShip(player.x, player.y, 1, "#65eaff", true);
           }
         }
@@ -660,7 +664,7 @@
       }
 
       function drawHud() {
-        const progress = state === "ready" ? 0 : Math.min(1, elapsed / LEVEL_DURATION);
+        const progress = state === "ready" ? 0 : screenDistance / LEVEL_DISTANCE;
         ctx.fillStyle = "rgba(6, 12, 27, .7)";
         ctx.fillRect(15, 15, WIDTH - 30, 55);
         ctx.strokeStyle = "rgba(132, 190, 235, .16)";
@@ -669,7 +673,7 @@
         ctx.textBaseline = "alphabetic";
         ctx.fillStyle = "#8298ba";
         ctx.font = "700 9px Segoe UI, sans-serif";
-        ctx.fillText("SECTOR PROGRESS", 27, 34);
+        ctx.fillText("SCREEN PROGRESS", 27, 34);
         ctx.fillStyle = "#e7f2ff";
         ctx.font = "700 15px Segoe UI, sans-serif";
         ctx.fillText(`${Math.floor(progress * 100)}%`, 27, 56);
@@ -729,7 +733,7 @@
           drawButton("LAUNCH MISSION", HEIGHT / 2 + 57);
           ctx.fillStyle = "#7388a8";
           ctx.font = "11px Segoe UI, sans-serif";
-          ctx.fillText("FIRST CONTACT AT 2%  ·  BOSS AT 90%", WIDTH / 2, HEIGHT / 2 + 116);
+          ctx.fillText("FIRST CONTACT AT 2%  ·  BOSS NEAR SCREEN LIMIT", WIDTH / 2, HEIGHT / 2 + 116);
         } else if (state === "paused") {
           ctx.fillStyle = "#f0f7ff";
           ctx.font = "800 35px Segoe UI, sans-serif";

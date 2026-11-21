@@ -1,5 +1,7 @@
 -- Starline event schedule. Load after term_project_V1.0.sql.
--- Progress is elapsed level progress (0-100); lane is playfield width percent.
+-- Progress is screen distance traveled (0-100); the screen stops at 100%.
+-- The boss appears at 98%, stays in the upper half as the screen reaches its limit,
+-- and is the final event. The level ends when the boss is defeated.
 CREATE TABLE IF NOT EXISTS level_map (
     id INTEGER PRIMARY KEY,
     progress_percent INTEGER NOT NULL CHECK (progress_percent BETWEEN 0 AND 100),
@@ -18,7 +20,9 @@ INSERT OR IGNORE INTO weapon (id, fire_rate, radius, x_speed, y_speed) VALUES
 
 -- Unassigned enemies may also drop either weapon at random.
 
-INSERT OR IGNORE INTO level_map (id, progress_percent, enemy_type, lane_percent, quantity, drop_weapon) VALUES
+DELETE FROM level_map;
+
+INSERT INTO level_map (id, progress_percent, enemy_type, lane_percent, quantity, drop_weapon) VALUES
     (1,   2, 'scout',  50, 1, NULL),
     (2,   8, 'scout',  27, 2, NULL),
     (3,  14, 'weaver', 72, 2, NULL),
@@ -35,5 +39,4 @@ INSERT OR IGNORE INTO level_map (id, progress_percent, enemy_type, lane_percent,
     (14, 78, 'weaver', 76, 4, 2),
     (15, 82, 'gunner', 36, 3, NULL),
     (16, 86, 'tank',   66, 2, 3),
-    (17, 90, 'boss',   50, 1, 3),
-    (18, 97, 'scout',  50, 3, NULL);
+    (17, 98, 'boss',   50, 1, 3);

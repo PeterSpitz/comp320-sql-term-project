@@ -134,4 +134,8 @@ include inserts to add powerups to the game.
 they will take the form of increased fire rate or firing at angles.
 create a mix of enemies including at least one boss level enemy.
 powerups spawn on enemy kills only and move towards the bottom of the screen
-first enemy appears no later than 5% of level progress
+first enemy appears no later than 5% of screen's progress
+level does not end based on distance
+boss has no y movement. only y movement comes from screen advancing through the level
+boss is set near max screen distance. remains in upper half when screen reaches it's limit
+level ends when boss dies
