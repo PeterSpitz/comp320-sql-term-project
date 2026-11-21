@@ -4,7 +4,7 @@ UPDATE entity SET
 WHERE spawned = 1; --move entity
 
 UPDATE entity
-SET spawned = 3
+SET spawned = 3 --enemy despawned
 WHERE spawned = 1
 AND EXISTS (
     SELECT 1

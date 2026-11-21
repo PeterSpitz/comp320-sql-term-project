@@ -1,7 +1,7 @@
 UPDATE player
 SET weapon = CASE
     WHEN EXISTS (
-        SELECT 1
+        SELECT 1 --does powerup touch player?
         FROM powerup pu
         WHERE
             (player.x_position - pu.x_position) * (player.x_position - pu.x_position)
@@ -9,7 +9,7 @@ SET weapon = CASE
             < (player.radius + pu.radius) * (player.radius + pu.radius)
     )
     THEN (
-        SELECT pt.new_weapon
+        SELECT pt.new_weapon --update equiped weapon
         FROM powerup pu
         JOIN power_types pt ON pt.id = pu.power_type
         WHERE

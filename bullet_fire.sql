@@ -6,4 +6,5 @@ SELECT p.x_position, p.y_position, w.radius,
         WHEN 3 THEN -w.x_speed
         END, w.y_speed, TRUE FROM player p
 JOIN weapon w ON p.weapon = w.id
-JOIN (VALUES (1),(2),(3)) AS slot(num) ON slot.num = 1 OR w.x_speed <> 0; --player shoots
+JOIN (VALUES (1),(2),(3)) AS slot(num) ON slot.num = 1 OR w.x_speed <> 0;
+--creates bullets from player. either 1 moving straight or 3 bullet spread

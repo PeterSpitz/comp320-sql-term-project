@@ -15,4 +15,4 @@ WHERE EXISTS (
         (bullet.y_position + bullet.radius < s.current_y_position)
         OR
         (bullet.y_position - bullet.radius > s.current_y_position + s.height)
-); --delete a bullet when its hitbox is outside the current screen
+); --delete a bullet when its hitbox is outside the screen

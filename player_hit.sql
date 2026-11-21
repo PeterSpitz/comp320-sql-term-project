@@ -24,4 +24,4 @@ AND EXISTS (
         + (p.y_position - bullet.y_position) * (p.y_position - bullet.y_position)
         < (p.radius + bullet.radius) * (p.radius + bullet.radius)
     )
-); --consume enemy bullets that hit the player
+); --delete enemy bullets that hit the player. no multi hits allowed

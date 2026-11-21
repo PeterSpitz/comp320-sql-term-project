@@ -8,7 +8,7 @@ SET
     hit = TRUE; --mark bullets that hit
 
 INSERT INTO powerup (x_position, y_position, radius, move_speed_x, move_speed_y, power_type)
-SELECT (e.x_position, e.y_position, 2, e.move_speed_x, (e.move_speed_y - 1), e.powerup) FROM entity e
+SELECT (e.x_position, e.y_position, 2, e.move_speed_x, e.move_speed_y, e.powerup) FROM entity e --powerups move with the same momentum as killed enemies
 JOIN bullet b ON (
                  (e.x_position - b.x_position) * (e.x_position - b.x_position)
                  + (e.y_position - b.y_position) * (e.y_position - b.y_position)

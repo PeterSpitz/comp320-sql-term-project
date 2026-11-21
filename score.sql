@@ -1,1 +1,1 @@
-UPDATE screen SET score = (SELECT COUNT(*) FROM entity WHERE spawned = 2);
+UPDATE screen SET score = (SELECT COUNT(*) FROM entity WHERE spawned = 2); --simple counter. 2 means killed

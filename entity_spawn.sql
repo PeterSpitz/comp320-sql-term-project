@@ -1,6 +1,6 @@
 UPDATE entity
 SET spawned = 1
-WHERE spawned = 0
+WHERE spawned = 0 --enemies don't act until screen reaches them
 AND EXISTS (
     SELECT 1
     FROM screen s
