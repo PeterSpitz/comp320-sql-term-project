@@ -5,7 +5,7 @@ Checklist of included logic
 - bullets: move, out of bounds, hit, spawn
 - powerups: spawn, move, out of bounds, collect
 - screen: move towards end, update score
-- level: use random generation
+- level: base level data in sql. map implemented in html layer
 
 Prompt used:
 
