@@ -49,3 +49,4 @@ The relationships between tables
 How to run your application
 
 - run index.html in a web browser
+- click to start the game then click again or move up to enter the screen
