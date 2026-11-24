@@ -23,11 +23,11 @@ Prompt used:
 - boss is set near max screen distance. remains in upper half when screen reaches it's limit
 - level ends when boss dies
 
-Your chosen dataset
+Chosen dataset
 
 - simple game made with sql. tables hold player, enemies, weapon list, spawned powerups/bullets, and screen data
 
-The relationships between your tables
+The relationships between tables
 
 - relationship between tables is a one to many for weapons to player,enemy, and powerups
 - many other relationships are conditional and instead implemented through insert, update, or delete statments
