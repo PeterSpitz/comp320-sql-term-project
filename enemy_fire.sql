@@ -4,7 +4,8 @@ SELECT e.x_position, e.y_position + e.radius, w.radius,
         WHEN 1 THEN 0
         WHEN 2 THEN w.x_speed
         WHEN 3 THEN -w.x_speed
-        END, -(w.y_speed), FALSE FROM entity e
+    END, -(w.y_speed),
+    FALSE FROM entity e
 JOIN weapon w ON e.weapon = w.id
 JOIN (
     SELECT 1 AS num

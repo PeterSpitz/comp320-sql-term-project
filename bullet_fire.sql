@@ -4,7 +4,8 @@ SELECT p.x_position, p.y_position, w.radius,
         WHEN 1 THEN 0
         WHEN 2 THEN w.x_speed
         WHEN 3 THEN -w.x_speed
-        END, w.y_speed, TRUE FROM player p
+    END, w.y_speed, 
+    TRUE FROM player p
 JOIN weapon w ON p.weapon = w.id
 JOIN (
     SELECT 1 AS num
