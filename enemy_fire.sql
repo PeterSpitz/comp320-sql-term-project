@@ -17,4 +17,5 @@ JOIN (
     UNION ALL SELECT 3
 ) AS slot ON slot.num = 1 OR w.x_speed <> 0
 
-WHERE e.spawned = 1; --same logic as player with direction reversed and flag changed
+WHERE e.spawned = 1; --check only live enemies
+--same logic as player with direction reversed and flag changed
