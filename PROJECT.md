@@ -9,10 +9,10 @@ Checklist of included logic
 
 Prompt used:
 
-- create a basic game from the respository.
+- create a basic game using the included respository.
 - store the result in index.html.
 - It will be a simple vertical plane shooter with the screen/player traveling upwards and enemies spawn at the top of the screen.
-- create a simple level and store it in level_map.sql as a set of insert statements holding values for the level.
+- create a simple level with regular waves of enemies with a final boss
 - include inserts to add powerups to the game.
 - they will take the form of increased fire rate or firing at angles.
 - create a mix of enemies including at least one boss level enemy.
@@ -20,7 +20,7 @@ Prompt used:
 - first enemy appears no later than 5% of screen's progress
 - level does not end based on distance
 - boss has no y movement. only y movement comes from screen advancing through the level
-- boss is set near max screen distance. remains in upper half when screen reaches it's limit
+- boss is set in top 1/4 of screen when screen reaches max distance
 - level ends when boss dies
 
 Chosen dataset
