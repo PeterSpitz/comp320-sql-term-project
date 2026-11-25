@@ -36,13 +36,18 @@ The relationships between tables
   - bullets are removed when they overlap an entity
     - one to one using delete
   - powerups are spawned during the hit detection for enemies
-    - one to one using insert
+    - one to many using insert
   - life adjustments are made during hit detection
     - one to one using update
   - order matters for these to avoid data loss
-    - tag bullet as hit, spawn powerup if 1 hp, lower enemy hp by 1 or set killed if 1, delete bullet
+    - tag bullet as hit
+    - spawn powerup if 1 hp
+    - lower enemy hp by 1 or set killed if 1
+    - delete bullet
   - objects are removed when they are outside the screen except the player which is instead pushed back
-    - many to one using delete/update. bullets/powerups deleted if outside bounds set in screen table. enemies marked as fled for score purposes
+    - many to one using delete/update.
+    - bullets/powerups deleted if outside bounds set in screen table.
+    - enemies marked as fled for score purposes
   - screen moves up a map
     - holds current position + area shown in screen. update to progress level
 
