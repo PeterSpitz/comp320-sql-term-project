@@ -11,6 +11,8 @@ Prompt used:
 
 - create a basic game using the included respository.
 - store the result in index.html.
+- set player starting point to be inside the visible area
+- set playable area to match visible area
 - It will be a simple vertical plane shooter with the screen/player traveling upwards and enemies spawn at the top of the screen.
 - create a simple level with regular waves of enemies with a final boss
 - include inserts to add powerups to the game.
@@ -56,3 +58,4 @@ How to run your application
 - https://peterspitz.github.io/comp320-sql-term-project/
 - run index.html in a web browser
 - click to start the game then click again or move up to enter the screen
+- playable area and visible area limits have a small discrepancy on the bottom causing the player to spawn under the decorative border

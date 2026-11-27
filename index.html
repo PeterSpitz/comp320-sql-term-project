@@ -276,7 +276,7 @@
         powerups = [];
         particles = [];
         player = {
-          x: W / 2, y: H - 92, radius: 13, speed: 280,
+          x: W / 2, y: H * 0.8, radius: 13, speed: 280,
           lives: 3, rapidFor: 0, spreadFor: 0, invulnerable: 1.5
         };
         state = "playing";
@@ -470,8 +470,8 @@
           player.x += (pointerTarget.x - player.x) * Math.min(1, dt * 9);
           player.y += (pointerTarget.y - player.y) * Math.min(1, dt * 9);
         }
-        player.x = Math.max(player.radius + 5, Math.min(W - player.radius - 5, player.x));
-        player.y = Math.max(H * 0.42, Math.min(H - player.radius - 18, player.y));
+        player.x = Math.max(player.radius, Math.min(W - player.radius, player.x));
+        player.y = Math.max(player.radius, Math.min(H - player.radius, player.y));
 
         fireTimer -= dt;
         if ((keys.has(" ") || pointerDown) && fireTimer <= 0) {
