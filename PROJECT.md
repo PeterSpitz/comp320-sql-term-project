@@ -53,5 +53,6 @@ The relationships between tables
 
 How to run your application
 
+- https://peterspitz.github.io/comp320-sql-term-project/
 - run index.html in a web browser
 - click to start the game then click again or move up to enter the screen
